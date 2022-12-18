@@ -7,6 +7,7 @@ class World:
         self.__maxY = mY
         self.__thingList = []
         self.__grid = []
+        self.__history = [["Time", "Fish", "Bears"]]
 
         for aRow in range(self.__maxY):
             row = []
@@ -21,6 +22,7 @@ class World:
         self.__wScreen.addshape("Bear.gif")
         self.__wScreen.addshape("Fish.gif")
         self.__wTurtle.hideturtle()
+        self.__timecount = 0
         
     def draw(self):
         self.__wScreen.tracer(0)
@@ -76,6 +78,8 @@ class World:
            aThing = random.randrange(len(self.__thingList))
            randomThing = self.__thingList[aThing]
            randomThing.liveALittle()
+        self.__timecount += 1           # time increases with each cycle.
+        self.updateHistory()            # update the history with new settings
 
     def emptyLocation(self, x, y):
         if self.__grid[y][x] == None:
@@ -89,14 +93,27 @@ class World:
     def freezeWorld(self):
         self.__wScreen.exitonclick()
         
+    # counts the things in the world.
+    # input: type of the thing to count, e.g., Bear or Fish
+    # output: count of the things belonging to the type
     def countThings(self, animal_type) -> int:
         result = 0
         for y in self.__grid:
             for x in y:
                 if isinstance(x, animal_type):
                     result += 1
-        
         return result
+    
+    def updateHistory(self):
+        self.__history.append([str(self.__timecount),str(self.countThings(Fish)),str(self.countThings(Bear))])
+        
+    def showHistory(self):
+        for r in self.__history:
+            for c in r:
+                print(c,",",end="")
+            print()
+        # TODO: do not print comma after the last item in the row
+
 
 class Fish:
     def __init__(self):
@@ -201,6 +218,8 @@ class Fish:
            self.move(nextX, nextY)
 
 class Bear:
+    BEAR_ENDURANCE = 4
+
     def __init__(self):
         self.__turtle = turtle.Turtle()
         self.__turtle.up()
@@ -213,6 +232,7 @@ class Bear:
 
         self.__starveTick = 0
         self.__breedTick = 0
+        self.__energy = self.BEAR_ENDURANCE
 
     def setX(self, newX):
         self.__xPos = newX
@@ -261,6 +281,7 @@ class Bear:
            childThing = Bear()
            self.__world.addThing(childThing, nextX, nextY)
            self.__breedTick = 0     #reset breedTick
+           self.__energy -= 1       # decrease energy due to breeding
 
     def tryToMove(self):
         offsetList = [(-1,1), (0,1), (1,1),
@@ -279,6 +300,7 @@ class Bear:
 
         if self.__world.emptyLocation(nextX, nextY):
            self.move(nextX, nextY)
+           self.__energy -= 1           # decrease energy due to movement. kept in here to ignore the movement connected with eating.
 
     def liveALittle(self):
         self.__breedTick = self.__breedTick + 1
@@ -287,10 +309,13 @@ class Bear:
 
         self.tryToEat()
 
-        if self.__starveTick == 10:  #if not eaten for 10 ticks, die
+        if self.__starveTick >= 10:  #if not eaten for BEAR_ENDURANCE ticks, die
             self.__world.delThing(self)
         else:
             self.tryToMove()
+        if self.__energy < 0:
+            print("energy exahausted")
+            self.__world.delThing(self)
 
     def tryToEat(self):
         offsetList = [(-1,1), (0,1) ,(1,1),
@@ -313,14 +338,15 @@ class Bear:
 
             self.__world.delThing(randomPrey)  #delete the Fish
             self.move(preyX, preyY)            #move to the Fish's location
-            self.__starveTick = 0
+            self.__starveTick = 0           # starvation counter reset
+            self.__energy += 1              # energy increase
         else:
             self.__starveTick = self.__starveTick + 1
 
 def mainSimulation():
-    numberOfBears = 5
-    numberOfFish = 2
-    worldLifeTime = 2500
+    numberOfBears = 9
+    numberOfFish = 3
+    worldLifeTime = 25
     worldWidth = 50
     worldHeight = 25
  
@@ -345,10 +371,15 @@ def mainSimulation():
             x = random.randrange(myWorld.getMaxX())
             y = random.randrange(myWorld.getMaxY())
         myWorld.addThing(newBear, x, y)
+    
+    # starting point of the world history. 
+    myWorld.updateHistory()
 
     for i in range(worldLifeTime):
-        print("Time: ",i,"Fish: ", myWorld.countThings(Fish))
-        print("Time: ",i,"Bears: ",myWorld.countThings(Bear))
+        # print("Time: ",i,"Fish: ", myWorld.countThings(Fish))
+        # print("Time: ",i,"Bears: ",myWorld.countThings(Bear))
         myWorld.liveALittle()
+        # myWorld.updateHistory()
 
+    myWorld.showHistory()
     myWorld.freezeWorld()
