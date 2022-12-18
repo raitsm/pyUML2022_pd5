@@ -344,9 +344,9 @@ class Bear:
             self.__starveTick = self.__starveTick + 1
 
 def mainSimulation():
-    numberOfBears = 9
-    numberOfFish = 3
-    worldLifeTime = 25
+    numberOfBears = 10
+    numberOfFish = 10
+    worldLifeTime = 1000
     worldWidth = 50
     worldHeight = 25
  
