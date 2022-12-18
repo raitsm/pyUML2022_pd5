@@ -88,6 +88,15 @@ class World:
 
     def freezeWorld(self):
         self.__wScreen.exitonclick()
+        
+    def countThings(self, animal_type) -> int:
+        result = 0
+        for y in self.__grid:
+            for x in y:
+                if isinstance(x, animal_type):
+                    result += 1
+        
+        return result
 
 class Fish:
     def __init__(self):
@@ -303,14 +312,14 @@ class Bear:
             preyY = randomPrey.getY()
 
             self.__world.delThing(randomPrey)  #delete the Fish
-            self.move(preyX, preyY)            #move to the Fish’s location
+            self.move(preyX, preyY)            #move to the Fish's location
             self.__starveTick = 0
         else:
             self.__starveTick = self.__starveTick + 1
 
 def mainSimulation():
-    numberOfBears = 10
-    numberOfFish = 10
+    numberOfBears = 5
+    numberOfFish = 2
     worldLifeTime = 2500
     worldWidth = 50
     worldHeight = 25
@@ -338,6 +347,8 @@ def mainSimulation():
         myWorld.addThing(newBear, x, y)
 
     for i in range(worldLifeTime):
+        print("Time: ",i,"Fish: ", myWorld.countThings(Fish))
+        print("Time: ",i,"Bears: ",myWorld.countThings(Bear))
         myWorld.liveALittle()
 
     myWorld.freezeWorld()
