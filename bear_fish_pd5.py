@@ -231,7 +231,7 @@ class Bear:
 
         self.__starveTick = 0
         self.__breedTick = 0
-        self.__energy = self.BEAR_ENDURANCE
+        self.__energy = Bear.BEAR_ENDURANCE
 
     def setX(self, newX):
         self.__xPos = newX
