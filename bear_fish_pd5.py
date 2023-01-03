@@ -1,5 +1,6 @@
 import turtle
 import random
+import world_history as wh
 
 class World:
     def __init__(self, mX, mY):
@@ -7,7 +8,8 @@ class World:
         self.__maxY = mY
         self.__thingList = []
         self.__grid = []
-        self.__history = [["Time", "Fish", "Bears"]]
+        # self.__history = [["Time", "Fish", "Bears"]]
+        self.__history = wh.WorldHistory(["Fish","Bears"])
 
         for aRow in range(self.__maxY):
             row = []
@@ -105,15 +107,12 @@ class World:
         return result
     
     def updateHistory(self):
-        self.__history.append([str(self.__timecount),str(self.countThings(Fish)),str(self.countThings(Bear))])
+        self.__history.addHistoryItem("Fish",self.countThings(Fish))
+        self.__history.addHistoryItem("Bears",self.countThings(Bear))
+        # self.__history.append([str(self.__timecount),str(self.countThings(Fish)),str(self.countThings(Bear))])
         
-    def showHistory(self):
-        for r in self.__history:
-            for c in r:
-                print(c,",",end="")
-            print()
-        # TODO: do not print comma after the last item in the row
-
+    def exportHistory(self, output: str):
+        self.__history.exportHistory(file_name=output)
 
 class Fish:
     def __init__(self):
@@ -218,7 +217,7 @@ class Fish:
            self.move(nextX, nextY)
 
 class Bear:
-    BEAR_ENDURANCE = 4
+    BEAR_ENDURANCE = 9
 
     def __init__(self):
         self.__turtle = turtle.Turtle()
@@ -300,7 +299,7 @@ class Bear:
 
         if self.__world.emptyLocation(nextX, nextY):
            self.move(nextX, nextY)
-           self.__energy -= 1           # decrease energy due to movement. kept in here to ignore the movement connected with eating.
+           self.__energy -= 1           # decrease energy due to moving. 
 
     def liveALittle(self):
         self.__breedTick = self.__breedTick + 1
@@ -309,12 +308,11 @@ class Bear:
 
         self.tryToEat()
 
-        if self.__starveTick >= 10:  #if not eaten for BEAR_ENDURANCE ticks, die
+        if self.__starveTick >= 10:  # if not eaten for 10 ticks, die
             self.__world.delThing(self)
         else:
             self.tryToMove()
-        if self.__energy < 0:
-            print("energy exahausted")
+        if self.__energy < 0:       
             self.__world.delThing(self)
 
     def tryToEat(self):
@@ -336,8 +334,10 @@ class Bear:
             preyX = randomPrey.getX()
             preyY = randomPrey.getY()
 
-            self.__world.delThing(randomPrey)  #delete the Fish
-            self.move(preyX, preyY)            #move to the Fish's location
+            self.__world.delThing(randomPrey)  # delete the Fish
+            # NB, movement in connection with eating will not decrease the energy
+            self.move(preyX, preyY)            # move to the Fish's location
+
             self.__starveTick = 0           # starvation counter reset
             self.__energy += 1              # energy increase
         else:
@@ -371,15 +371,15 @@ def mainSimulation():
             x = random.randrange(myWorld.getMaxX())
             y = random.randrange(myWorld.getMaxY())
         myWorld.addThing(newBear, x, y)
-    
-    # starting point of the world history. 
+        
+    # Record the situation at the beginning of the world history. 
     myWorld.updateHistory()
 
     for i in range(worldLifeTime):
-        # print("Time: ",i,"Fish: ", myWorld.countThings(Fish))
-        # print("Time: ",i,"Bears: ",myWorld.countThings(Bear))
         myWorld.liveALittle()
         # myWorld.updateHistory()
 
-    myWorld.showHistory()
+    print("Simulation over, exporting world history...")
+    myWorld.exportHistory("WorldHistory.csv")
+    print("All done.")
     myWorld.freezeWorld()
